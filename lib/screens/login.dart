@@ -120,7 +120,7 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                   TextSpan(
-                    text: " and ",
+                    text: " and aaa",
                     style: TextStyle(color: Colors.grey.shade900, fontSize: 16),
                   ),
                   TextSpan(

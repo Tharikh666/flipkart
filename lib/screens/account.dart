@@ -1,6 +1,12 @@
-import 'package:flipkart/screens/login.dart';
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flipkart/screens/login.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class Account extends StatefulWidget {
@@ -11,124 +17,187 @@ class Account extends StatefulWidget {
 }
 
 class _AccountState extends State<Account> {
+  String? userName;
+  User? user;
+  StreamSubscription<User?>? authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for authentication state changes
+    authSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((User? user) {
+          if (mounted) {
+            setState(() {
+              this.user = user;
+            });
+          }
+
+          if (user != null) {
+            fetchUserDetails(user.uid); // Fetch user details using UID
+          } else {
+            print("User is NOT logged in.");
+            setState(() {
+              userName = null; // Reset user data when logged out
+            });
+          }
+        });
+  }
+
+  Future<void> fetchUserDetails(String uid) async {
+    try {
+      var userDoc = await FirebaseFirestore.instance
+          .collection('userDetails')
+          .doc(uid) // Using UID for document reference
+          .get();
+
+      if (userDoc.exists) {
+        print("User data fetched: ${userDoc.data()}"); // Debug print
+
+        if (mounted) {
+          setState(() {
+            userName = userDoc.data()?['name']; // Get user name from Firestore
+          });
+        }
+      } else {
+        print("User document not found in Firestore.");
+      }
+    } catch (e) {
+      print("Error fetching user details: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    authSubscription?.cancel(); // Clean up listener to avoid memory leaks
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: user != null
+          ? AppBar(
         backgroundColor: Colors.white,
         toolbarHeight: 140,
-        leadingWidth: double.maxFinite,
+        leadingWidth: double.infinity,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
-            width: double.maxFinite,
+            width: double.infinity,
             height: 175,
             decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue, width: 1),
-                borderRadius: BorderRadius.circular(5)),
+              border: Border.all(color: Colors.blue, width: 1),
+              borderRadius: BorderRadius.circular(5),
+            ),
             child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 8.0, right: 8.0, top: 8.0, bottom: 4.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const Login()),
-                        );
-                      },
-                      child: Text(
-                        'Tharikh Bin Siyad',
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
-                      ),
+                  Text(
+                    userName ?? "User", // Display user's name
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 8.0, right: 8.0, bottom: 4.0, top: 4.0),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 110,
-                          height: 15,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('assets/icons/plus_logo.png'),
-                              fit: BoxFit.fitHeight,
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.grey,
-                          size: 16,
-                        )
-                      ],
+                  const SizedBox(height: 8),
+                  Text(
+                    user?.email ?? "", // Display user's email
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 14,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      width: double.infinity, // Full width
-                      height: 0.5, // Line thickness
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.grey, Colors.transparent],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                      ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      setState(() {
+                        user = null;
+                        userName = null;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
                     ),
+                    child: const Text("Logout"),
                   ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 8.0, bottom: 4.0, top: 4.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Supercoins Balance',
-                          style: TextStyle(color: Colors.black, fontSize: 12),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4.0, right: 4.0),
-                          child: Container(
-                            width: 30,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.yellow),
-                              image: DecorationImage(
-                                  image: AssetImage(
-                                      'assets/icons/supercoin_icon_min.png'),
-                                  alignment: Alignment.centerLeft,
-                                  fit: BoxFit.fitHeight),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 2),
-                              child: Text(
-                                '0',
-                                textAlign: TextAlign.right,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.grey,
-                          size: 16,
-                        )
-                      ],
-                    ),
-                  )
                 ],
               ),
+            ),
+          ),
+        ),
+      )
+          : AppBar(
+        backgroundColor: Colors.white,
+        toolbarHeight: 110,
+        leadingWidth: double.infinity,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            width: double.infinity,
+            height: 100,
+            decoration: const BoxDecoration(color: Colors.white),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 8.0, top: 8.0),
+                  child: Text(
+                    'Account',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        'Log in to get exclusive offers',
+                        style:
+                        TextStyle(color: Colors.black, fontSize: 14),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Login()),
+                          ).then((_) {
+                            if (FirebaseAuth.instance.currentUser !=
+                                null) {
+                              fetchUserDetails(
+                                  FirebaseAuth.instance.currentUser!.uid);
+                            }
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: CupertinoColors.systemBlue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Log In'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
         ),
@@ -137,6 +206,9 @@ class _AccountState extends State<Account> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            SizedBox(
+              height: 10,
+            ),
             Container(
               width: double.infinity,
               height: 125,

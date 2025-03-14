@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flipkart/screens/login.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -18,6 +15,7 @@ class Account extends StatefulWidget {
 
 class _AccountState extends State<Account> {
   String? userName;
+  int? superCoins;
   User? user;
   StreamSubscription<User?>? authSubscription;
 
@@ -28,36 +26,38 @@ class _AccountState extends State<Account> {
     // Listen for authentication state changes
     authSubscription =
         FirebaseAuth.instance.authStateChanges().listen((User? user) {
-          if (mounted) {
-            setState(() {
-              this.user = user;
-            });
-          }
-
-          if (user != null) {
-            fetchUserDetails(user.uid); // Fetch user details using UID
-          } else {
-            print("User is NOT logged in.");
-            setState(() {
-              userName = null; // Reset user data when logged out
-            });
-          }
+      if (mounted) {
+        setState(() {
+          this.user = user;
         });
+      }
+
+      if (user != null) {
+        fetchUserDetails(user.uid); // Fetch user details using UID
+      } else {
+        print("User is NOT logged in.");
+        setState(() {
+          userName = null; // Reset user data when logged out
+          superCoins = null;
+        });
+      }
+    });
   }
 
   Future<void> fetchUserDetails(String uid) async {
     try {
       var userDoc = await FirebaseFirestore.instance
           .collection('userDetails')
-          .doc(uid) // Using UID for document reference
+          .doc(uid)
           .get();
 
       if (userDoc.exists) {
-        print("User data fetched: ${userDoc.data()}"); // Debug print
+        print("User data fetched: ${userDoc.data()}");
 
         if (mounted) {
           setState(() {
-            userName = userDoc.data()?['name']; // Get user name from Firestore
+            userName = userDoc.data()?['name'] as String?;
+            superCoins = (userDoc.data()?['supercoin'] ?? 0) as int;
           });
         }
       } else {
@@ -70,7 +70,7 @@ class _AccountState extends State<Account> {
 
   @override
   void dispose() {
-    authSubscription?.cancel(); // Clean up listener to avoid memory leaks
+    authSubscription?.cancel();
     super.dispose();
   }
 
@@ -79,129 +79,183 @@ class _AccountState extends State<Account> {
     return Scaffold(
       appBar: user != null
           ? AppBar(
-        backgroundColor: Colors.white,
-        toolbarHeight: 140,
-        leadingWidth: double.infinity,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            width: double.infinity,
-            height: 175,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue, width: 1),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    userName ?? "User", // Display user's name
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              backgroundColor: Colors.white,
+              toolbarHeight: 140,
+              leadingWidth: double.infinity,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  width: double.infinity,
+                  height: 175,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue, width: 1),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName ?? "User",
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Container(
+                              width: 100,
+                              height: 15,
+                              decoration: const BoxDecoration(
+                                image: DecorationImage(
+                                  image:
+                                      AssetImage('assets/icons/plus_logo.png'),
+                                  fit: BoxFit.contain,
+                                  alignment: Alignment.topLeft,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: 250,
+                          height: 0.75,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                CupertinoColors.activeBlue,
+                                Colors.transparent,
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Text(
+                              'Supercoins Balance',
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 12),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.yellow),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Image.asset(
+                                    'assets/icons/supercoin_icon_min.png',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    superCoins != null
+                                        ? superCoins.toString()
+                                        : "0",
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    user?.email ?? "", // Display user's email
-                    style: const TextStyle(
-                      color: Colors.black54,
-                      fontSize: 14,
-                    ),
+                ),
+              ),
+            )
+          : AppBar(
+              backgroundColor: Colors.white,
+              toolbarHeight: 110,
+              leadingWidth: double.infinity,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  width: double.infinity,
+                  height: 100,
+                  decoration: const BoxDecoration(color: Colors.white),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8.0, top: 8.0),
+                        child: Text(
+                          'Account',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8.0),
+                            child: Text(
+                              'Log in to get exclusive offers',
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 14),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const Login()),
+                                ).then((_) {
+                                  if (FirebaseAuth.instance.currentUser !=
+                                      null) {
+                                    fetchUserDetails(
+                                        FirebaseAuth.instance.currentUser!.uid);
+                                  }
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: CupertinoColors.systemBlue,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Log In'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-                      setState(() {
-                        user = null;
-                        userName = null;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text("Logout"),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      )
-          : AppBar(
-        backgroundColor: Colors.white,
-        toolbarHeight: 110,
-        leadingWidth: double.infinity,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            width: double.infinity,
-            height: 100,
-            decoration: const BoxDecoration(color: Colors.white),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 8.0, top: 8.0),
-                  child: Text(
-                    'Account',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: Text(
-                        'Log in to get exclusive offers',
-                        style:
-                        TextStyle(color: Colors.black, fontSize: 14),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const Login()),
-                          ).then((_) {
-                            if (FirebaseAuth.instance.currentUser !=
-                                null) {
-                              fetchUserDetails(
-                                  FirebaseAuth.instance.currentUser!.uid);
-                            }
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: CupertinoColors.systemBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Log In'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        ),
-      ),
       backgroundColor: CupertinoColors.lightBackgroundGray,
       body: SingleChildScrollView(
         child: Column(
@@ -369,89 +423,6 @@ class _AccountState extends State<Account> {
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Container(
-              width: double.infinity,
-              height: 75,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 1,
-                    spreadRadius: 1,
-                    offset: Offset(1, 1),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image:
-                              AssetImage('assets/icons/verify_email_logo.png'),
-                          fit: BoxFit.cover),
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Add/Verify your Email',
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Icon(
-                              Icons.circle,
-                              color: Colors.red,
-                              size: 8,
-                            ),
-                          )
-                        ],
-                      ),
-                      Text(
-                        'Get latest updates of your orders',
-                        style: TextStyle(
-                            color: Colors.black54,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600),
-                      )
-                    ],
-                  ),
-                  Container(
-                    width: 75,
-                    height: 30,
-                    decoration: BoxDecoration(
-                        color: CupertinoColors.activeBlue,
-                        borderRadius: BorderRadius.circular(4)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Text(
-                        'Update',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )
                 ],
               ),
             ),
@@ -1208,9 +1179,87 @@ class _AccountState extends State<Account> {
               ),
             ),
             SizedBox(
+              height: 5,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () async {
+                  bool confirmLogout = await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("Confirm Log out"),
+                        content: Text("Are you sure you want to log out?"),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(5),
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(false); // Cancel logout
+                            },
+                            child: Text(
+                              "Cancel",
+                              style: TextStyle(color: CupertinoColors.activeBlue),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(true); // Confirm logout
+                            },
+                            child: Text(
+                              "Log Out",
+                              style: TextStyle(color: CupertinoColors.activeBlue),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (confirmLogout == true) {
+                    try {
+                      await FirebaseAuth.instance.signOut();
+                      setState(() {
+                        user = null;
+                        userName = null;
+                      });
+
+                      // Show success snackbar
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Logged out successfully"),
+                          backgroundColor: CupertinoColors.activeBlue,
+                        ),
+                      );
+                    } catch (e) {
+                      // Show error snackbar
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Logout failed: ${e.toString()}"),
+                          backgroundColor: Colors.grey,
+                        ),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: CupertinoColors.activeBlue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(5)),
+                  ),
+                  minimumSize: Size(double.infinity, 40),
+                ),
+                child: const Text("Log Out"),
+              ),
+            ),
+            SizedBox(
               height: 20,
             ),
-            // Container(width: ,)
           ],
         ),
       ),

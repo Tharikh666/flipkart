@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../widgets/carousel.dart';
+import 'category_page.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -33,7 +34,7 @@ class _HomeState extends State<Home> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-                colors: [Colors.lightBlue, Colors.white],
+                colors: [CupertinoColors.activeBlue, Colors.white],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter),
           ),
@@ -81,8 +82,7 @@ class _HomeState extends State<Home> {
 
             //Category
             StreamBuilder(
-              stream:
-                  FirebaseFirestore.instance.collection('category').snapshots(),
+              stream: FirebaseFirestore.instance.collection('category').snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -98,31 +98,43 @@ class _HomeState extends State<Home> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: categories.map((category) {
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 64,
-                                  height: 64,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      image: NetworkImage(category["image"]),
-                                      fit: BoxFit.contain,
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CategoryPage(
+                                categoryName: category["label"],
+                                categoryImage: category["image"],
+                              ),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                        image: NetworkImage(category["image"]),
+                                        fit: BoxFit.contain,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  category["label"],
-                                  style: TextStyle(
-                                      color: Colors.black, fontSize: 12),
-                                )
-                              ],
+                                  Text(
+                                    category["label"],
+                                    style: TextStyle(color: Colors.black, fontSize: 12),
+                                  )
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     }).toList(),
                   ),

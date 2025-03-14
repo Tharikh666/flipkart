@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flipkart/screens/account.dart';
+import 'package:flipkart/screens/home.dart';
+import 'package:flipkart/screens/navigation_bar.dart';
 import 'package:flipkart/screens/register.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'account.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -50,10 +51,9 @@ class _LoginState extends State<Login> {
         SnackBar(content: Text("Login Successful!")),
       );
 
-      // Navigate to Account page after successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => Account()),
+      // Navigate to Home and clear all previous routes
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => Navigate()), // Your main page
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -61,7 +61,6 @@ class _LoginState extends State<Login> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +96,7 @@ class _LoginState extends State<Login> {
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
+              autofocus: true,
               decoration: InputDecoration(
                 labelText: "Email",
                 border: OutlineInputBorder(
@@ -136,7 +136,8 @@ class _LoginState extends State<Login> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SignUp()),
+                          MaterialPageRoute(
+                              builder: (context) => const SignUp()),
                         );
                       },
                       child: Text(
@@ -156,7 +157,7 @@ class _LoginState extends State<Login> {
             RichText(
               text: TextSpan(
                 text:
-                "By continuing, you confirm that you are above 18 years of age, and you agree to Flipkart's ",
+                    "By continuing, you confirm that you are above 18 years of age, and you agree to Flipkart's ",
                 style: TextStyle(color: Colors.grey.shade900, fontSize: 16),
                 children: [
                   TextSpan(

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flipkart/screens/home.dart';
 import 'package:flipkart/screens/categories.dart';
 import 'package:flipkart/screens/account.dart';
@@ -41,7 +43,7 @@ class _NavigateState extends State<Navigate> {
         ),
         child: BottomNavigationBar(
           backgroundColor: Colors.white,
-          selectedItemColor: Colors.blue,
+          selectedItemColor: CupertinoColors.activeBlue,
           unselectedItemColor: Colors.grey,
           type: BottomNavigationBarType.fixed,
           currentIndex: _currentIndex,
@@ -49,20 +51,20 @@ class _NavigateState extends State<Navigate> {
           items: [
             BottomNavigationBarItem(
               icon: Icon(_currentIndex == 0
-                  ? Icons.home_rounded
-                  : Icons.home_outlined),
+                  ? CupertinoIcons.house_fill
+                  : CupertinoIcons.house),
               label: "Home",
             ),
             BottomNavigationBarItem(
               icon: Icon(_currentIndex == 1
-                  ? Icons.category_rounded
-                  : Icons.category_outlined),
+                  ? CupertinoIcons.square_grid_2x2_fill
+                  : CupertinoIcons.square_grid_2x2),
               label: "Categories",
             ),
             BottomNavigationBarItem(
               icon: Icon(_currentIndex == 2
-                  ? Icons.person_2
-                  : Icons.person_2_outlined),
+                  ? CupertinoIcons.person_fill
+                  : CupertinoIcons.person),
               label: "Account",
             ),
             // BottomNavigationBarItem(

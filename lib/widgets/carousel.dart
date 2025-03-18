@@ -11,26 +11,41 @@ class FlipkartHomeCarousel extends StatefulWidget {
 }
 
 class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
-  int activeIndex = 0; // Track active index
+  int activeIndex = 0;
+  Future<List<Map<String, dynamic>>>? carouselItemsFuture; // Make it nullable
+
+  @override
+  void initState() {
+    super.initState();
+    carouselItemsFuture = fetchCarouselItems(); // Initialize the future properly
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCarouselItems() async {
+    try {
+      var snapshot =
+      await FirebaseFirestore.instance.collection('carousel').get();
+      return snapshot.docs
+          .map((doc) => {'image': doc['image'], 'text': doc['text']})
+          .toList();
+    } catch (e) {
+      print('Error fetching carousel items: $e');
+      return [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('carousel').snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+    return FutureBuilder(
+      future: carouselItemsFuture,
+      builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('No carousel images available'));
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No carousel images available'));
         }
 
-        var imageCarouselItems = snapshot.data!.docs.map((doc) {
-          return {
-            'image': doc['image'],
-            'text': doc['text']
-          };
-        }).toList();
+        var imageCarouselItems = snapshot.data!;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -41,7 +56,9 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
                 autoPlay: true,
                 enlargeCenterPage: true,
                 viewportFraction: 1,
-
+                onPageChanged: (index, reason) {
+                  setState(() => activeIndex = index);
+                },
               ),
               items: imageCarouselItems.map((item) {
                 return Stack(
@@ -52,7 +69,7 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
                       height: 210,
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: NetworkImage(item['image']!), // Load from Firestore
+                          image: NetworkImage(item['image'] ?? ''),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -60,21 +77,19 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
                     Container(
                       width: double.maxFinite,
                       height: 35,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                      ),
+                      decoration: const BoxDecoration(color: Colors.black),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              item['text'],
-                              style: TextStyle(color: Colors.white),
+                              item['text'] ?? '',
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
                             child: Icon(
                               Icons.arrow_forward_outlined,
                               color: Colors.white,
@@ -88,12 +103,13 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 7), // Space between slider and dots
+            const SizedBox(height: 7),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 imageCarouselItems.length,
-                    (index) => Container(
+                    (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   width: activeIndex == index ? 24 : 10,
                   height: 5,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -126,7 +142,7 @@ class _HomeSearchCarouselState extends State<HomeSearchCarousel> {
     'Fashion',
     'Food',
     'TV',
-    'watches'
+    'Watches'
   ];
 
   int activeIndex = 0; // Track active index
@@ -163,110 +179,128 @@ class ElectronicsCarousel extends StatefulWidget {
 }
 
 class _ElectronicsCarouselState extends State<ElectronicsCarousel> {
-  int activeIndex = 0; // Track active index
+  int activeIndex = 0;
+  List<Map<String, String>> imageCarouselItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCarouselItems();
+  }
+
+  Future<void> _fetchCarouselItems() async {
+    try {
+      var snapshot = await FirebaseFirestore.instance
+          .collection('electronicsCarousel')
+          .get();
+
+      setState(() {
+        imageCarouselItems = snapshot.docs.map((doc) {
+          return {
+            'image': doc['image'] as String,
+            'text': doc['text'] as String,
+          };
+        }).toList();
+      });
+
+    } catch (e) {
+      setState(() {
+        imageCarouselItems = [];
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('electronicsCarousel').snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('No carousel images available'));
-        }
+    if (imageCarouselItems.isEmpty) {
+      return const Center(child: Text('No carousel images available'));
+    }
 
-        var imageCarouselItems = snapshot.data!.docs.map((doc) {
-          return {
-            'image': doc['image'],
-            'text': doc['text']
-          };
-        }).toList();
-
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CarouselSlider(
-              options: CarouselOptions(
-                height: 200.0,
-                autoPlay: true,
-                enlargeCenterPage: false,
-                viewportFraction: 1,
-
-              ),
-              items: imageCarouselItems.map((item) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      Container(
-                        width: double.maxFinite,
-                        height: 210,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(item['image']!), // Load from Firestore
-                            fit: BoxFit.cover,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CarouselSlider(
+          options: CarouselOptions(
+            height: 200.0,
+            autoPlay: true,
+            enlargeCenterPage: false,
+            viewportFraction: 1,
+            onPageChanged: (index, reason) {
+              setState(() => activeIndex = index);
+            },
+          ),
+          items: imageCarouselItems.map((item) {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Container(
+                    width: double.maxFinite,
+                    height: 210,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(item['image'] ?? ''),
+                        fit: BoxFit.cover,
                       ),
-                      Container(
-                        width: double.maxFinite,
-                        height: 35,
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(8),
-                            bottomRight: Radius.circular(8),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  Container(
+                    width: double.maxFinite,
+                    height: 35,
+                    decoration: const BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            item['text'] ?? '',
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                item['text'],
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                Icons.arrow_forward_outlined,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 7), // Space between slider and dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                imageCarouselItems.length,
-                    (index) => Container(
-                  width: activeIndex == index ? 24 : 10,
-                  height: 5,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: activeIndex == index ? Colors.black : Colors.grey,
-                  ),
-                ),
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(
+                            Icons.arrow_forward_outlined,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 7),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            imageCarouselItems.length,
+                (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: activeIndex == index ? 24 : 10,
+              height: 5,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: activeIndex == index ? Colors.black : Colors.grey,
               ),
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -279,25 +313,43 @@ class GadgetsCarousel extends StatefulWidget {
 }
 
 class _GadgetsCarouselState extends State<GadgetsCarousel> {
-  int activeIndex = 0; // Track active index
+  int activeIndex = 0;
+  late Future<List<Map<String, dynamic>>> carouselItemsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    carouselItemsFuture = fetchCarouselItems();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCarouselItems() async {
+    try {
+      var snapshot = await FirebaseFirestore.instance.collection('gadgetsCarousel').get();
+      return snapshot.docs.map((doc) {
+        return {
+          'image': doc['image'] ?? '',
+          'text': doc['text'] ?? ''
+        };
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching carousel items: $e');
+      return [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('gadgetsCarousel').snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+    return FutureBuilder(
+      future: carouselItemsFuture,
+      builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('No carousel images available'));
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No carousel images available'));
         }
 
-        var imageCarouselItems = snapshot.data!.docs.map((doc) {
-          return {
-            'image': doc['image'],
-            'text': doc['text']
-          };
-        }).toList();
+        var imageCarouselItems = snapshot.data!;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -308,7 +360,9 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
                 autoPlay: true,
                 enlargeCenterPage: false,
                 viewportFraction: 1,
-
+                onPageChanged: (index, reason) {
+                  setState(() => activeIndex = index);
+                },
               ),
               items: imageCarouselItems.map((item) {
                 return Padding(
@@ -317,20 +371,20 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
                     alignment: Alignment.bottomCenter,
                     children: [
                       Container(
-                        width: double.maxFinite,
+                        width: double.infinity,
                         height: 210,
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: NetworkImage(item['image']!), // Load from Firestore
+                            image: NetworkImage(item['image']!),
                             fit: BoxFit.cover,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       Container(
-                        width: double.maxFinite,
+                        width: double.infinity,
                         height: 35,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.black,
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(8),
@@ -343,12 +397,12 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
-                                item['text'],
-                                style: TextStyle(color: Colors.white),
+                                item['text']!,
+                                style: const TextStyle(color: Colors.white),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: Icon(
                                 Icons.arrow_forward_outlined,
                                 color: Colors.white,
@@ -363,12 +417,13 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 7), // Space between slider and dots
+            const SizedBox(height: 7),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 imageCarouselItems.length,
-                    (index) => Container(
+                    (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   width: activeIndex == index ? 24 : 10,
                   height: 5,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -385,3 +440,5 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
     );
   }
 }
+
+

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 
 class Products extends StatefulWidget {
   final String productLabel;
-  final String productImage;
+  final String productItem;
 
   const Products({
-    Key? key,
+    super.key,
     required this.productLabel,
-    required this.productImage,
-  }) : super(key: key);
+    required this.productItem,
+  });
 
   @override
   State<Products> createState() => _ProductsState();
@@ -53,7 +53,7 @@ class _ProductsState extends State<Products> {
         ],
       ),
       body: SingleChildScrollView(
-        child: ProductBody(itemType: widget.productLabel),
+        child: ProductBody(itemType: widget.productItem),
       ),
     );
   }

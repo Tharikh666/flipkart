@@ -101,7 +101,7 @@ class _HomeState extends State<Home> {
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       childAspectRatio: 1,
-                      crossAxisSpacing: 8,
+                      crossAxisSpacing: 16,
                       mainAxisSpacing: 8,
                     ),
                     itemCount: categories.length,
@@ -133,7 +133,8 @@ class _HomeState extends State<Home> {
                             ),
                             Text(
                               category["label"],
-                              style: TextStyle(color: Colors.black, fontSize: 12),
+                              style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -198,8 +199,8 @@ class _HomeState extends State<Home> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => Products(
-                                          productLabel: category["item"],
-                                          productImage: category["image"],
+                                          productLabel: category["label"],
+                                          productItem: category["item"],
                                         ),
                                       ),
                                     );

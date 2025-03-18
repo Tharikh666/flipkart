@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flipkart/screens/products.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -93,11 +94,19 @@ class _HomeState extends State<Home> {
 
                 List<QueryDocumentSnapshot> categories = snapshot.data!.docs;
 
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: categories.map((category) {
+                return SizedBox(
+                  height: 175, // Adjust based on item size
+                  child: GridView.builder(
+                    scrollDirection: Axis.horizontal,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 1,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      var category = categories[index];
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -112,31 +121,24 @@ class _HomeState extends State<Home> {
                         },
                         child: Column(
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 64,
-                                    height: 64,
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(category["image"]),
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    category["label"],
-                                    style: TextStyle(color: Colors.black, fontSize: 12),
-                                  )
-                                ],
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: NetworkImage(category["image"]),
+                                  fit: BoxFit.contain,
+                                ),
                               ),
+                            ),
+                            Text(
+                              category["label"],
+                              style: TextStyle(color: Colors.black, fontSize: 12),
                             ),
                           ],
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
                 );
               },
@@ -149,11 +151,12 @@ class _HomeState extends State<Home> {
                 width: double.maxFinite,
                 height: 250,
                 decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: AssetImage(
-                            'assets/images/discover&shop_cont_bg.jpg'),
-                        fit: BoxFit.cover),
-                    borderRadius: BorderRadius.circular(8)),
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/discover&shop_cont_bg.jpg'),
+                    fit: BoxFit.cover,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -162,27 +165,25 @@ class _HomeState extends State<Home> {
                       child: Text(
                         'Discover & Shop',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     StreamBuilder(
                       stream: FirebaseFirestore.instance
                           .collection('discoverShop')
                           .snapshots(),
-                      builder:
-                          (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
+                      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
                           return Center(child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return Center(child: Text("No categories available"));
+                          return Center(child: Text("No products available"));
                         }
 
-                        List<QueryDocumentSnapshot> categories =
-                            snapshot.data!.docs;
+                        List<QueryDocumentSnapshot> categories = snapshot.data!.docs;
 
                         return SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -191,59 +192,74 @@ class _HomeState extends State<Home> {
                             children: categories.map((category) {
                               return Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: Stack(
-                                  alignment: Alignment.bottomCenter,
-                                  children: [
-                                    Container(
-                                      width: 135,
-                                      height: 190,
-                                      decoration: BoxDecoration(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => Products(
+                                          productLabel: category["item"],
+                                          productImage: category["image"],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Stack(
+                                    alignment: Alignment.bottomCenter,
+                                    children: [
+                                      Container(
+                                        width: 135,
+                                        height: 190,
+                                        decoration: BoxDecoration(
                                           image: DecorationImage(
-                                              image: NetworkImage(
-                                                  category["image"]),
-                                              fit: BoxFit.contain,
-                                              alignment: Alignment.center),
+                                            image: NetworkImage(category["image"]),
+                                            fit: BoxFit.contain,
+                                            alignment: Alignment.topCenter,
+                                          ),
                                           color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                    ),
-                                    Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Text(
-                                            category["label"],
-                                            style: TextStyle(
+                                          borderRadius: BorderRadius.circular(5),
+                                        ),
+                                      ),
+                                      Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              category["label"],
+                                              style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 12,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 135,
-                                          height: 30,
-                                          decoration: BoxDecoration(
-                                            color: Colors.black,
-                                            borderRadius: BorderRadius.only(
-                                              bottomLeft: Radius.circular(5),
-                                              bottomRight: Radius.circular(5),
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(4.0),
-                                            child: Text(
-                                              category["rate"],
-                                              style: TextStyle(
+                                          Container(
+                                            width: 135,
+                                            height: 30,
+                                            decoration: BoxDecoration(
+                                              color: Colors.black,
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft: Radius.circular(5),
+                                                bottomRight: Radius.circular(5),
+                                              ),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(4.0),
+                                              child: Text(
+                                                category["rate"],
+                                                style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 12,
-                                                  fontWeight: FontWeight.bold),
-                                              textAlign: TextAlign.center,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
                                             ),
-                                          ),
-                                        )
-                                      ],
-                                    )
-                                  ],
+                                          )
+                                        ],
+                                      )
+                                    ],
+                                  ),
                                 ),
                               );
                             }).toList(),

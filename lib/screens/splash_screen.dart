@@ -1,4 +1,3 @@
-import 'package:flipkart/screens/home.dart';
 import 'package:flipkart/screens/navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

@@ -1,5 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flipkart/screens/navigation_bar.dart';
 import 'package:flipkart/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 

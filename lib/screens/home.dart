@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../widgets/carousel.dart';
+import '../widgets/search_bar.dart';
 import 'category_page.dart';
 
 class Home extends StatefulWidget {
@@ -24,7 +25,7 @@ class _HomeState extends State<Home> {
           child: Container(
             width: 75,
             height: 50,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/icons/flipkart_logo.png'),
                 fit: BoxFit.cover,
@@ -33,57 +34,29 @@ class _HomeState extends State<Home> {
           ),
         ),
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
-                colors: [CupertinoColors.activeBlue, Colors.white],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter),
+              colors: [Colors.blue, Colors.white],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
         ),
-        title: Container(
-          width: double.maxFinite,
-          height: 35,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.blue, width: 2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(
-                  Icons.search,
-                  color: CupertinoColors.activeBlue,
-                ),
-              ),
-              Expanded(child: HomeSearchCarousel()),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Icon(
-                  Icons.photo_camera_outlined,
-                  color: Colors.grey,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Icon(
-                  Icons.mic_none_rounded,
-                  color: Colors.grey,
-                ),
-              )
-            ],
-          ),
-        ),
+        title: SearchBarWidget(),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
+            SizedBox(
+              height: 10,
+            ),
+
             FlipkartHomeCarousel(),
 
             //Category
             StreamBuilder(
-              stream: FirebaseFirestore.instance.collection('category').snapshots(),
+              stream:
+                  FirebaseFirestore.instance.collection('category').snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -133,7 +106,10 @@ class _HomeState extends State<Home> {
                             ),
                             Text(
                               category["label"],
-                              style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -153,7 +129,8 @@ class _HomeState extends State<Home> {
                 height: 250,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage('assets/images/discover&shop_cont_bg.jpg'),
+                    image:
+                        AssetImage('assets/images/discover&shop_cont_bg.jpg'),
                     fit: BoxFit.cover,
                   ),
                   borderRadius: BorderRadius.circular(8),
@@ -176,15 +153,18 @@ class _HomeState extends State<Home> {
                       stream: FirebaseFirestore.instance
                           .collection('discoverShop')
                           .snapshots(),
-                      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                      builder:
+                          (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return Center(child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                           return Center(child: Text("No products available"));
                         }
 
-                        List<QueryDocumentSnapshot> categories = snapshot.data!.docs;
+                        List<QueryDocumentSnapshot> categories =
+                            snapshot.data!.docs;
 
                         return SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -213,12 +193,14 @@ class _HomeState extends State<Home> {
                                         height: 190,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
-                                            image: NetworkImage(category["image"]),
+                                            image:
+                                                NetworkImage(category["image"]),
                                             fit: BoxFit.contain,
                                             alignment: Alignment.topCenter,
                                           ),
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(5),
+                                          borderRadius:
+                                              BorderRadius.circular(5),
                                         ),
                                       ),
                                       Column(
@@ -245,7 +227,8 @@ class _HomeState extends State<Home> {
                                               ),
                                             ),
                                             child: Padding(
-                                              padding: const EdgeInsets.all(4.0),
+                                              padding:
+                                                  const EdgeInsets.all(4.0),
                                               child: Text(
                                                 category["rate"],
                                                 style: TextStyle(

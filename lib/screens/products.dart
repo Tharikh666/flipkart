@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flipkart/screens/product_details.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/search_bar.dart';
+
 class Products extends StatefulWidget {
   final String productLabel;
   final String productItem;
@@ -9,7 +11,7 @@ class Products extends StatefulWidget {
   const Products({
     super.key,
     required this.productLabel,
-    required this.productItem,
+    required this.productItem
   });
 
   @override
@@ -26,24 +28,9 @@ class _ProductsState extends State<Products> {
           onTap: () => Navigator.pop(context),
           child: const Icon(Icons.arrow_back, color: Colors.black),
         ),
-        title: Container(
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: TextFormField(
-            decoration: InputDecoration(
-              hintText: widget.productLabel,
-              hintStyle: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
-              ),
-              prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border: InputBorder.none,
-            ),
-          ),
+        title: SearchBarWidget(hintTexts: [],
+          hintText: widget.productItem,
+          showTrailing: false,
         ),
         actions: const [
           Padding(

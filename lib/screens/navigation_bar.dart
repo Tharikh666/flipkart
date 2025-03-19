@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flipkart/screens/home.dart';
 import 'package:flipkart/screens/categories.dart';
 import 'package:flipkart/screens/account.dart';

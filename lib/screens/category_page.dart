@@ -1,16 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flipkart/widgets/search_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/carousel.dart';
 
-class CategoryPage extends StatelessWidget {
+class CategoryPage extends StatefulWidget {
   final String categoryName;
   final String categoryImage;
 
-  const CategoryPage(
-      {super.key, required this.categoryName, required this.categoryImage});
+  const CategoryPage({
+    super.key,
+    required this.categoryName,
+    required this.categoryImage,
+  });
 
+  @override
+  State<CategoryPage> createState() => _CategoryPageState();
+}
+
+class _CategoryPageState extends State<CategoryPage> {
   Widget buildBody(String category) {
     switch (category) {
       case 'Electronics':
@@ -22,6 +31,33 @@ class CategoryPage extends StatelessWidget {
           child: Text('Category not found'),
         );
     }
+  }
+
+  void _showSearchBar(BuildContext context) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => GestureDetector(
+        onTap: () => overlayEntry.remove(),
+        child: Container(
+          color: Colors.black12,
+          alignment: const Alignment(0,-0.775),
+          child: GestureDetector(
+            onTap: () {}, // Prevent closing when interacting with the search bar
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SearchBarWidget(
+                hintText: "Search Products",
+                showTrailing: false,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
   }
 
   @override
@@ -38,15 +74,16 @@ class CategoryPage extends StatelessWidget {
           ),
         ),
         title: Text(
-          categoryName,
+          widget.categoryName,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: CupertinoColors.activeBlue,
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(
-              Icons.search,
+            child: IconButton(
+              onPressed: () => _showSearchBar(context),
+              icon: Icon(Icons.search),
               color: Colors.white,
             ),
           ),
@@ -61,7 +98,7 @@ class CategoryPage extends StatelessWidget {
       ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        child: buildBody(categoryName),
+        child: buildBody(widget.categoryName),
       ),
     );
   }

@@ -1,6 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flipkart/screens/account.dart';
-import 'package:flipkart/screens/home.dart';
 import 'package:flipkart/screens/navigation_bar.dart';
 import 'package:flipkart/screens/register.dart';
 import 'package:flutter/cupertino.dart';

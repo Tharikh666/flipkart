@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flipkart/screens/products.dart';
 import 'package:flipkart/widgets/search_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,11 @@ class _CategoryPageState extends State<CategoryPage> {
               child: SearchBarWidget(
                 hintText: "Search Products",
                 showTrailing: false,
+                onSubmitted: (String query) {
+                  // ✅ Close the search bar first
+                  overlayEntry.remove();
+
+                }
               ),
             ),
           ),

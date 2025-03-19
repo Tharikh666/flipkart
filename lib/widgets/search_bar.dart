@@ -36,17 +36,18 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     super.initState();
 
     // Use provided hint texts or default ones
-    _hintTexts = widget.hintTexts ?? [
-      "Fashion",
-      "TV",
-      "Laptops",
-      "Mobiles",
-      "Watches",
-      "Food",
-      "Accessories",
-      "Shoes",
-      "Furniture"
-    ];
+    _hintTexts = widget.hintTexts ??
+        [
+          "Fashion",
+          "TV",
+          "Laptops",
+          "Mobiles",
+          "Watches",
+          "Food",
+          "Accessories",
+          "Shoes",
+          "Furniture"
+        ];
 
     // Timer to rotate hints every 2 seconds
     _hintTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
@@ -75,15 +76,16 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
       final queryLower = query.toLowerCase();
 
       // ✅ Fetch all products once
-      final allProducts = await FirebaseFirestore.instance.collection('products').get();
+      final allProducts =
+          await FirebaseFirestore.instance.collection('products').get();
 
       setState(() {
         // ✅ Filter products where 'name' or 'item' contains the query (partial match)
         _searchResults = allProducts.docs
             .map((doc) => doc.data())
             .where((product) =>
-        product['name'].toString().toLowerCase().contains(queryLower) ||
-            product['item'].toString().toLowerCase().contains(queryLower))
+                product['name'].toString().toLowerCase().contains(queryLower) ||
+                product['item'].toString().toLowerCase().contains(queryLower))
             .toList();
 
         // ✅ Handle "No products found" scenario
@@ -159,10 +161,9 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             onSubmitted: (query) {
               if (widget.onSubmitted != null) {
                 widget.onSubmitted!(query);
-              } else {
-                if (_searchResults.isNotEmpty) {
-                  _navigateToResultsPage(query);
-                }
+              }
+              if (_searchResults.isNotEmpty) {
+                _navigateToResultsPage(query);
               }
             },
 
@@ -175,21 +176,21 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             ),
             trailing: widget.showTrailing
                 ? [
-              Padding(
-                padding: const EdgeInsets.only(right: 4.0),
-                child: Icon(
-                  Icons.photo_camera_outlined,
-                  color: CupertinoColors.activeBlue,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 4.0),
-                child: Icon(
-                  Icons.qr_code_scanner,
-                  color: CupertinoColors.activeBlue,
-                ),
-              ),
-            ]
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4.0),
+                      child: Icon(
+                        Icons.photo_camera_outlined,
+                        color: CupertinoColors.activeBlue,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4.0),
+                      child: Icon(
+                        Icons.qr_code_scanner,
+                        color: CupertinoColors.activeBlue,
+                      ),
+                    ),
+                  ]
                 : null,
           );
         },

@@ -7,11 +7,13 @@ import '../widgets/search_bar.dart';
 class Products extends StatefulWidget {
   final String productLabel;
   final String productItem;
+  final String? searchHint;
 
   const Products({
     super.key,
     required this.productLabel,
-    required this.productItem
+    required this.productItem,
+    this.searchHint,
   });
 
   @override
@@ -29,7 +31,7 @@ class _ProductsState extends State<Products> {
           child: const Icon(Icons.arrow_back, color: Colors.black),
         ),
         title: SearchBarWidget(hintTexts: [],
-          hintText: widget.productItem,
+          hintText: widget.searchHint ?? widget.productItem,
           showTrailing: false,
         ),
         actions: const [

@@ -52,9 +52,7 @@ class _CategoryPageState extends State<CategoryPage> {
                 hintText: "Search Products",
                 showTrailing: false,
                 onSubmitted: (String query) {
-                  // ✅ Close the search bar first
                   overlayEntry.remove();
-
                 }
               ),
             ),

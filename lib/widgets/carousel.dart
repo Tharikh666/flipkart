@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+
+import '../screens/products.dart';
 
 class FlipkartHomeCarousel extends StatefulWidget {
   const FlipkartHomeCarousel({super.key});
@@ -12,26 +13,92 @@ class FlipkartHomeCarousel extends StatefulWidget {
 
 class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
   int activeIndex = 0;
-  Future<List<Map<String, dynamic>>>? carouselItemsFuture; // Make it nullable
+  Future<List<Map<String, dynamic>>>? carouselItemsFuture;
 
   @override
   void initState() {
     super.initState();
-    carouselItemsFuture = fetchCarouselItems(); // Initialize the future properly
+    carouselItemsFuture = fetchCarouselItems();
   }
 
   Future<List<Map<String, dynamic>>> fetchCarouselItems() async {
     try {
       var snapshot =
-      await FirebaseFirestore.instance.collection('carousel').get();
+          await FirebaseFirestore.instance.collection('carousel').get();
       return snapshot.docs
-          .map((doc) => {'image': doc['image'], 'text': doc['text']})
+          .map((doc) => {
+                'image': doc['image'],
+                'text': doc['text'],
+                'item': doc['item'],
+                'product': doc['product']
+              })
           .toList();
     } catch (e) {
       print('Error fetching carousel items: $e');
       return [];
     }
   }
+
+  void navigateToProducts(BuildContext context, String product, String item) async {
+    try {
+      // Fetch all products from Firestore
+      var productSnapshot =
+      await FirebaseFirestore.instance.collection('products').get();
+
+      // Extract product documents
+      List<QueryDocumentSnapshot> productDocs = productSnapshot.docs;
+
+      // Try to find a product with a partial match on the name
+      QueryDocumentSnapshot? matchedProduct;
+      try {
+        matchedProduct = productDocs.firstWhere(
+              (doc) => (doc['name'] as String)
+              .toLowerCase()
+              .contains(product.toLowerCase()),
+        );
+      } catch (e) {
+        matchedProduct = null; // If no match, catch the exception and set null
+      }
+
+      // If a matching product is found, navigate to that specific product
+      if (matchedProduct != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Products(
+              productLabel: matchedProduct?['name'],
+              productItem: matchedProduct?['item'],
+              searchHint: product,
+            ),
+          ),
+        );
+      } else {
+        // No match found — fallback to showing all products of the same item category
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Products(
+              productLabel: "Results for \"$product\"",
+              productItem: item,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error checking product match: $e");
+      // Handle error gracefully by showing the item category products
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Products(
+            productLabel: "Results for \"$product\"",
+            productItem: item,
+          ),
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -61,45 +128,49 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
                 },
               ),
               items: imageCarouselItems.map((item) {
-                return Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    Container(
-                      width: double.maxFinite,
-                      height: 210,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(item['image'] ?? ''),
-                          fit: BoxFit.cover,
+                return GestureDetector(
+                  onTap: () => navigateToProducts(
+                      context, item['product'] ?? '', item['item'] ?? ''),
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Container(
+                        width: double.maxFinite,
+                        height: 210,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: NetworkImage(item['image'] ?? ''),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                    ),
-                    Container(
-                      width: double.maxFinite,
-                      height: 35,
-                      decoration: const BoxDecoration(color: Colors.black),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              item['text'] ?? '',
-                              style: const TextStyle(color: Colors.white),
+                      Container(
+                        width: double.maxFinite,
+                        height: 35,
+                        decoration: const BoxDecoration(color: Colors.black),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                item['text'] ?? '',
+                                style: const TextStyle(color: Colors.white),
+                              ),
                             ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Icon(
-                              Icons.arrow_forward_outlined,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.arrow_forward_outlined,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
                 );
               }).toList(),
             ),
@@ -108,7 +179,7 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 imageCarouselItems.length,
-                    (index) => AnimatedContainer(
+                (index) => AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   width: activeIndex == index ? 24 : 10,
                   height: 5,
@@ -127,48 +198,8 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
   }
 }
 
-class HomeSearchCarousel extends StatefulWidget {
-  const HomeSearchCarousel({super.key});
-
-  @override
-  State<HomeSearchCarousel> createState() => _HomeSearchCarouselState();
-}
-
-class _HomeSearchCarouselState extends State<HomeSearchCarousel> {
-  final List<String> searchItems = [
-    'Laptops',
-    'Mobiles',
-    'Shoes',
-    'Fashion',
-    'Food',
-    'TV',
-    'Watches'
-  ];
-
-  int activeIndex = 0; // Track active index
-
-  @override
-  Widget build(BuildContext context) {
-    return CarouselSlider(
-      options: CarouselOptions(
-        height: 30,
-        scrollDirection: Axis.vertical,
-        autoPlay: true,
-        onPageChanged: (index, reason) {
-          setState(() {
-            activeIndex = index;
-          });
-        },
-      ),
-      items: searchItems.map((item) {
-        return Text(
-          item,
-          style:
-              TextStyle(color: CupertinoColors.systemGrey2, fontSize: 12),
-        );
-      }).toList(),
-    );
-  }
+extension StringExtension on String {
+  String capitalize() => "${this[0].toUpperCase()}${substring(1)}";
 }
 
 class ElectronicsCarousel extends StatefulWidget {
@@ -202,14 +233,12 @@ class _ElectronicsCarouselState extends State<ElectronicsCarousel> {
           };
         }).toList();
       });
-
     } catch (e) {
       setState(() {
         imageCarouselItems = [];
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -288,7 +317,7 @@ class _ElectronicsCarouselState extends State<ElectronicsCarousel> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
             imageCarouselItems.length,
-                (index) => AnimatedContainer(
+            (index) => AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               width: activeIndex == index ? 24 : 10,
               height: 5,
@@ -324,12 +353,10 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
 
   Future<List<Map<String, dynamic>>> fetchCarouselItems() async {
     try {
-      var snapshot = await FirebaseFirestore.instance.collection('gadgetsCarousel').get();
+      var snapshot =
+          await FirebaseFirestore.instance.collection('gadgetsCarousel').get();
       return snapshot.docs.map((doc) {
-        return {
-          'image': doc['image'] ?? '',
-          'text': doc['text'] ?? ''
-        };
+        return {'image': doc['image'] ?? '', 'text': doc['text'] ?? ''};
       }).toList();
     } catch (e) {
       debugPrint('Error fetching carousel items: $e');
@@ -422,7 +449,7 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 imageCarouselItems.length,
-                    (index) => AnimatedContainer(
+                (index) => AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   width: activeIndex == index ? 24 : 10,
                   height: 5,
@@ -440,5 +467,3 @@ class _GadgetsCarouselState extends State<GadgetsCarousel> {
     );
   }
 }
-
-

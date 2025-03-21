@@ -17,6 +17,7 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController addressController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController pinCodeController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
 
@@ -25,6 +26,7 @@ class _SignUpState extends State<SignUp> {
   final FocusNode emailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
   final FocusNode confirmPasswordFocus = FocusNode();
+  final FocusNode pinCodeFocus = FocusNode();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -62,6 +64,7 @@ class _SignUpState extends State<SignUp> {
           'address': addressController.text,
           'email': emailController.text,
           'supercoin': 150,
+          'pin': pinCodeController.text,
           'authid': authId,
         });
 
@@ -127,10 +130,14 @@ class _SignUpState extends State<SignUp> {
                     ),
                     SizedBox(height: 20),
                     buildTextField(
-                        "Name", nameController, nameFocus, TextInputType.name),
+                        "Name", nameController, nameFocus, TextInputType.name,
+                        autoFocus: true),
                     SizedBox(height: 20),
                     buildTextField("Address", addressController, addressFocus,
                         TextInputType.streetAddress),
+                    SizedBox(height: 20),
+                    buildTextField("PIN Code", pinCodeController, pinCodeFocus,
+                        TextInputType.number),
                     SizedBox(height: 20),
                     buildTextField("Email", emailController, emailFocus,
                         TextInputType.emailAddress),
@@ -205,12 +212,13 @@ class _SignUpState extends State<SignUp> {
 
   Widget buildTextField(String label, TextEditingController controller,
       FocusNode focusNode, TextInputType inputType,
-      {bool obscureText = false, int maxLength = 100}) {
+      {bool obscureText = false, int maxLength = 100, bool autoFocus = false}) {
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
       keyboardType: inputType,
       obscureText: obscureText,
+      autofocus: autoFocus,
       maxLength: maxLength == 100 ? null : maxLength,
       textCapitalization: inputType == TextInputType.name ||
               inputType == TextInputType.streetAddress

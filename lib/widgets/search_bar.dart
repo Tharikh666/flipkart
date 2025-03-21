@@ -75,12 +75,10 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     try {
       final queryLower = query.toLowerCase();
 
-      // ✅ Fetch all products once
       final allProducts =
           await FirebaseFirestore.instance.collection('products').get();
 
       setState(() {
-        // ✅ Filter products where 'name' or 'item' contains the query (partial match)
         _searchResults = allProducts.docs
             .map((doc) => doc.data())
             .where((product) =>
@@ -88,7 +86,6 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 product['item'].toString().toLowerCase().contains(queryLower))
             .toList();
 
-        // ✅ Handle "No products found" scenario
         if (_searchResults.isEmpty) {
           _searchResults = [
             {"name": "No products found", "item": ""}

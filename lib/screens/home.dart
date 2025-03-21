@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flipkart/screens/products.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,6 +18,71 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  String? userName;
+  String? address;
+  String? pinCode;
+  User? user;
+  StreamSubscription<User?>? authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for authentication state changes
+    authSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (mounted) {
+        setState(() {
+          this.user = user;
+        });
+      }
+
+      if (user != null) {
+        fetchUserDetails(user.uid); // Fetch user details using UID
+      } else {
+        print("User is NOT logged in.");
+        setState(() {
+          userName = null; // Reset user data when logged out
+          address = null;
+          pinCode = null;
+        });
+      }
+    });
+  }
+
+  Future<void> fetchUserDetails(String uid) async {
+    try {
+      var userDoc = await FirebaseFirestore.instance
+          .collection('userDetails')
+          .doc(uid)
+          .get();
+
+      if (userDoc.exists) {
+        if (mounted) {
+          setState(() {
+            userName = userDoc.data()?['name'] as String?;
+            address = (userDoc.data()?['address'] ?? 0) as String;
+            pinCode = (userDoc.data()?['pin'] ?? 0) as String;
+          });
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("User document not found in Firestore")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching user details: $e")),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    authSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,9 +102,11 @@ class _HomeState extends State<Home> {
           ),
         ),
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.blue, Colors.white],
+              colors: user != null
+                  ? [Colors.blueAccent, Colors.white]
+                  : [Colors.pinkAccent, Colors.white],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -47,6 +117,51 @@ class _HomeState extends State<Home> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            if (user != null) ...[
+              SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "DELIVERY TO: ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 12,
+                          ),
+                        ),
+                        TextSpan(
+                          text: "${address ?? 'address'},",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: "  PIN: ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 12,
+                          ),
+                        ),
+                        TextSpan(
+                          text: pinCode ?? '',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
             SizedBox(
               height: 10,
             ),

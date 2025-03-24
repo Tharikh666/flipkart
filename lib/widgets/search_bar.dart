@@ -10,6 +10,7 @@ class SearchBarWidget extends StatefulWidget {
   final String? hintText;
   final bool showTrailing;
   final Function(String)? onSubmitted;
+  final String? userId;
 
   const SearchBarWidget({
     super.key,
@@ -17,6 +18,7 @@ class SearchBarWidget extends StatefulWidget {
     this.hintText,
     this.showTrailing = true,
     this.onSubmitted,
+    this.userId
   });
 
   @override
@@ -108,6 +110,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
       context,
       MaterialPageRoute(
         builder: (context) => Products(
+          userId: widget.userId,
           productLabel: product['name'] ?? 'Unknown',
           productItem: product['item'] ?? 'No Details',
         ),
@@ -121,6 +124,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
       context,
       MaterialPageRoute(
         builder: (context) => Products(
+          userId: widget.userId,
           productLabel: query,
           productItem: _searchResults.isNotEmpty
               ? _searchResults.first['item'] ?? 'No Details'

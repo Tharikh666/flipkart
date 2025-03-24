@@ -120,6 +120,7 @@ flutter:
     - assets/icons/flipkart_logo_text.png
     - assets/images/purple_bg.jpg
     - assets/icons/spoyl.png
+    - assets/icons/cart_icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

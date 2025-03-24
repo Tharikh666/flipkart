@@ -1,7 +1,5 @@
-import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flipkart/screens/products.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,76 +9,21 @@ import '../widgets/search_bar.dart';
 import 'category_page.dart';
 
 class Home extends StatefulWidget {
-  const Home({super.key});
+  final String? userId;
+  final String? userName;
+  final String? address;
+  final String? pinCode;
+  const Home(
+      {super.key, this.userId, this.userName, this.address, this.pinCode});
 
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  String? userName;
-  String? address;
-  String? pinCode;
-  User? user;
-  StreamSubscription<User?>? authSubscription;
-
   @override
   void initState() {
     super.initState();
-
-    // Listen for authentication state changes
-    authSubscription =
-        FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (mounted) {
-        setState(() {
-          this.user = user;
-        });
-      }
-
-      if (user != null) {
-        fetchUserDetails(user.uid); // Fetch user details using UID
-      } else {
-        print("User is NOT logged in.");
-        setState(() {
-          userName = null; // Reset user data when logged out
-          address = null;
-          pinCode = null;
-        });
-      }
-    });
-  }
-
-  Future<void> fetchUserDetails(String uid) async {
-    try {
-      var userDoc = await FirebaseFirestore.instance
-          .collection('userDetails')
-          .doc(uid)
-          .get();
-
-      if (userDoc.exists) {
-        if (mounted) {
-          setState(() {
-            userName = userDoc.data()?['name'] as String?;
-            address = (userDoc.data()?['address'] ?? 0) as String;
-            pinCode = (userDoc.data()?['pin'] ?? 0) as String;
-          });
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("User document not found in Firestore")),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error fetching user details: $e")),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    authSubscription?.cancel();
-    super.dispose();
   }
 
   @override
@@ -104,60 +47,72 @@ class _HomeState extends State<Home> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: user != null
-                  ? [Colors.blueAccent, Colors.white]
-                  : [Colors.pinkAccent, Colors.white],
+              colors: widget.userId != null
+                  ? [Colors.pinkAccent, Colors.white]
+                  : [Colors.blueAccent, Colors.white],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
           ),
         ),
-        title: SearchBarWidget(),
+        title: SearchBarWidget(userId: widget.userId,),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            if (user != null) ...[
+            if (widget.userId != null) ...[
               SizedBox(height: 10),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8.0),
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: "DELIVERY TO: ",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            fontSize: 12,
-                          ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.house_fill,
+                        color: Colors.black,
+                        size: 16,
+                      ),
+                      SizedBox(
+                        width: 5,
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: "HOME: ",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                fontSize: 12,
+                              ),
+                            ),
+                            TextSpan(
+                              text: "${widget.address ?? 'address'},",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 10,
+                              ),
+                            ),
+                            TextSpan(
+                              text: "  PIN: ",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                fontSize: 12,
+                              ),
+                            ),
+                            TextSpan(
+                              text: widget.pinCode ?? '',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
                         ),
-                        TextSpan(
-                          text: "${address ?? 'address'},",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "  PIN: ",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            fontSize: 12,
-                          ),
-                        ),
-                        TextSpan(
-                          text: pinCode ?? '',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -166,7 +121,9 @@ class _HomeState extends State<Home> {
               height: 10,
             ),
 
-            FlipkartHomeCarousel(),
+            FlipkartHomeCarousel(
+              userId: widget.userId,
+            ),
 
             //Category
             StreamBuilder(
@@ -201,6 +158,7 @@ class _HomeState extends State<Home> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CategoryPage(
+                                userId: widget.userId,
                                 categoryName: category["label"],
                                 categoryImage: category["image"],
                               ),
@@ -294,6 +252,7 @@ class _HomeState extends State<Home> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => Products(
+                                          userId: widget.userId,
                                           productLabel: category["label"],
                                           productItem: category["item"],
                                         ),

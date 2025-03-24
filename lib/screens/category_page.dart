@@ -5,13 +5,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/carousel.dart';
+import 'cart.dart';
 
 class CategoryPage extends StatefulWidget {
   final String categoryName;
   final String categoryImage;
+  final String? userId;
 
   const CategoryPage({
     super.key,
+    this.userId,
     required this.categoryName,
     required this.categoryImage,
   });
@@ -43,18 +46,19 @@ class _CategoryPageState extends State<CategoryPage> {
         onTap: () => overlayEntry.remove(),
         child: Container(
           color: Colors.black12,
-          alignment: const Alignment(0,-0.775),
+          alignment: const Alignment(0, -0.775),
           child: GestureDetector(
-            onTap: () {}, // Prevent closing when interacting with the search bar
+            onTap:
+                () {}, // Prevent closing when interacting with the search bar
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: SearchBarWidget(
-                hintText: "Search Products",
-                showTrailing: false,
-                onSubmitted: (String query) {
-                  overlayEntry.remove();
-                }
-              ),
+                userId: widget.userId,
+                  hintText: "Search Products",
+                  showTrailing: false,
+                  onSubmitted: (String query) {
+                    overlayEntry.remove();
+                  }),
             ),
           ),
         ),
@@ -93,9 +97,19 @@ class _CategoryPageState extends State<CategoryPage> {
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Icon(
-              Icons.shopping_cart,
+            child: IconButton(
+              icon: Icon(Icons.shopping_cart),
               color: Colors.white,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Cart(
+                      userId: widget.userId,
+                    ),
+                  ),
+                );
+              },
             ),
           )
         ],

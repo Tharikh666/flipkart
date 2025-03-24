@@ -5,7 +5,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import '../screens/products.dart';
 
 class FlipkartHomeCarousel extends StatefulWidget {
-  const FlipkartHomeCarousel({super.key});
+  final String? userId;
+  const FlipkartHomeCarousel({super.key, this.userId});
 
   @override
   State<FlipkartHomeCarousel> createState() => _FlipkartHomeCarouselState();
@@ -39,66 +40,62 @@ class _FlipkartHomeCarouselState extends State<FlipkartHomeCarousel> {
     }
   }
 
-  void navigateToProducts(BuildContext context, String product, String item) async {
+  void navigateToProducts(
+      BuildContext context, String product, String item) async {
     try {
-      // Fetch all products from Firestore
-      var productSnapshot =
-      await FirebaseFirestore.instance.collection('products').get();
+      // Fetch products that match both 'item' and 'product' fields
+      var productSnapshot = await FirebaseFirestore.instance
+          .collection('products')
+          .where('item', isEqualTo: item)
+          .where('name', isGreaterThanOrEqualTo: product)
+          .where('name', isLessThanOrEqualTo: '$product\uf8ff')
+          .get();
 
-      // Extract product documents
-      List<QueryDocumentSnapshot> productDocs = productSnapshot.docs;
+      // Extract the product documents
+      List<QueryDocumentSnapshot> matchedProductsSnap = productSnapshot.docs;
 
-      // Try to find a product with a partial match on the name
-      QueryDocumentSnapshot? matchedProduct;
-      try {
-        matchedProduct = productDocs.firstWhere(
-              (doc) => (doc['name'] as String)
-              .toLowerCase()
-              .contains(product.toLowerCase()),
-        );
-      } catch (e) {
-        matchedProduct = null; // If no match, catch the exception and set null
-      }
-
-      // If a matching product is found, navigate to that specific product
-      if (matchedProduct != null) {
+      if (matchedProductsSnap.isNotEmpty) {
+        // Navigate to products page with filtered products
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => Products(
-              productLabel: matchedProduct?['name'],
-              productItem: matchedProduct?['item'],
-              searchHint: product,
+              userId: widget.userId,
+              productLabel: product,
+              productItem: item,
+              matchedProducts: matchedProductsSnap,
             ),
           ),
         );
       } else {
-        // No match found — fallback to showing all products of the same item category
+        // No exact matches — fallback to showing the category
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => Products(
               productLabel: "Results for \"$product\"",
               productItem: item,
+              matchedProducts: matchedProductsSnap,
             ),
           ),
         );
       }
     } catch (e) {
-      print("Error checking product match: $e");
-      // Handle error gracefully by showing the item category products
+      print("Error fetching products: $e");
+
+      // Navigate to category results with an empty list or error message
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => Products(
             productLabel: "Results for \"$product\"",
             productItem: item,
+            matchedProducts: [], // Pass an empty list or handle error more gracefully
           ),
         ),
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

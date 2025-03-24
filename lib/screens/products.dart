@@ -3,17 +3,22 @@ import 'package:flipkart/screens/product_details.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/search_bar.dart';
+import 'cart.dart';
 
 class Products extends StatefulWidget {
+  final String? userId;
   final String productLabel;
   final String productItem;
   final String? searchHint;
+  final List<QueryDocumentSnapshot<Object?>>? matchedProducts;
 
   const Products({
     super.key,
+    this.userId,
     required this.productLabel,
     required this.productItem,
     this.searchHint,
+    this.matchedProducts,
   });
 
   @override
@@ -30,19 +35,36 @@ class _ProductsState extends State<Products> {
           onTap: () => Navigator.pop(context),
           child: const Icon(Icons.arrow_back, color: Colors.black),
         ),
-        title: SearchBarWidget(hintTexts: [],
-          hintText: widget.searchHint ?? widget.productItem,
+        title: SearchBarWidget(
+          userId: widget.userId,
+          hintTexts: [],
+          hintText: widget.searchHint ?? widget.productLabel,
           showTrailing: false,
         ),
-        actions: const [
+        actions:  [
           Padding(
             padding: EdgeInsets.all(8.0),
-            child: Icon(Icons.shopping_cart_outlined, color: Colors.black),
+            child: IconButton(
+              icon: Icon(Icons.shopping_cart, color: Colors.black),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Cart(
+                      userId: widget.userId,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        child: ProductBody(itemType: widget.productItem),
+        child: ProductBody(
+            userId: widget.userId,
+            itemType: widget.productItem,
+            matchedProducts: widget.matchedProducts),
       ),
     );
   }
@@ -51,15 +73,31 @@ class _ProductsState extends State<Products> {
 // 🎯 ProductBody dynamically loads content based on itemType
 class ProductBody extends StatelessWidget {
   final String itemType;
+  final String? userId;
+  final List<QueryDocumentSnapshot<Object?>>? matchedProducts;
 
-  const ProductBody({super.key, required this.itemType});
+  const ProductBody({
+    super.key,
+    required this.itemType,
+    this.matchedProducts,
+    this.userId,
+  });
 
   @override
   Widget build(BuildContext context) {
+    print("✅ ProductBody received: ${matchedProducts?.length ?? 0} products");
+
+    // 🛠️ Case 1: Show matched products if available
+    if (matchedProducts != null && matchedProducts!.isNotEmpty) {
+      print("matchedProducts is not empty");
+      return _buildProductGrid(matchedProducts!);
+    }
+
+    // 🔍 Case 2: Fallback to category-wide stream fetch
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection("products")
-          .where("item", isEqualTo: itemType) // Filters by item type
+          .where("item", isEqualTo: itemType)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -70,27 +108,39 @@ class ProductBody extends StatelessWidget {
           return Center(child: Text("Error: ${snapshot.error}"));
         }
 
+        // 🛑 No products in this category
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(child: Text("No products found."));
         }
 
+        // ✅ Case 2 success: Load all products from this category
         var products = snapshot.data!.docs;
+        print("matchedProducts is empty");
+        return _buildProductGrid(products);
+      },
+    );
+  }
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(8),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.62,
-          ),
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            return ProductCard(
-                product: products[index].data() as Map<String, dynamic>);
-          },
+  // 🔥 Extracted reusable grid builder
+  Widget _buildProductGrid(List<QueryDocumentSnapshot<Object?>> products) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.62,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final productData = products[index].data() as Map<String, dynamic>;
+
+        return ProductCard(
+          userId: userId,
+          product: productData,
+          productId: products[index].id,
         );
       },
     );
@@ -98,15 +148,20 @@ class ProductBody extends StatelessWidget {
 }
 
 class ProductCard extends StatelessWidget {
-  final Map<String, dynamic> product; // Pass the full product map
+  final Map<String, dynamic> product;
+  final String productId;
+  final String? userId;
 
   const ProductCard({
     super.key,
+    this.userId,
     required this.product,
+    required this.productId, // ✅ Require Firestore document ID
   });
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Extract product data with safe fallbacks
     String name = product['name'] ?? "No Name";
     String image = product['img1'] ?? "";
     String price = product['price'] ?? "0";
@@ -122,6 +177,8 @@ class ProductCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => ProductDetails(
+              userId: userId,
+              productId: productId, // ✅ Pass the correct Firestore ID
               name: name,
               item: product['item'] ?? "No Description",
               price: price,
@@ -153,7 +210,7 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image
+            // 📸 Product Image
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -167,6 +224,9 @@ class ProductCard extends StatelessWidget {
                     top: Radius.circular(8),
                   ),
                 ),
+                child: image.isEmpty
+                    ? const Center(child: Icon(Icons.image_not_supported))
+                    : null,
               ),
             ),
             Padding(
@@ -174,7 +234,7 @@ class ProductCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Name
+                  // 🏷️ Product Name
                   Text(
                     name,
                     maxLines: 2,
@@ -185,7 +245,7 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  // Price, Discount, and Original Price
+                  // 💰 Price, Discount, and Original Price
                   Row(
                     children: [
                       Text(
@@ -216,7 +276,7 @@ class ProductCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // Product Rating
+                  // ⭐ Product Rating & Delivery Info
                   Row(
                     children: [
                       Container(
@@ -260,11 +320,10 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-// 🎯 Calculate Discount Percentage (handles commas too)
+  // 🎯 Calculate Discount Percentage (handles commas too)
   int _calculateDiscount(String price, String exPrice) {
     double parsePrice(String value) {
-      // Remove commas and parse the number
-      String cleanedValue = value.replaceAll(',', '');
+      String cleanedValue = value.replaceAll(',', ''); // 🔍 Clean commas
       return double.tryParse(cleanedValue) ?? 0;
     }
 

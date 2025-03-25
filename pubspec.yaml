@@ -66,61 +66,8 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/icons/flipkart_logo.png
-    - assets/images/carousel_ad_image_1.jpg
-    - assets/images/carousel_ad_image_2.jpg
-    - assets/images/carousel_ad_image_3.jpg
-    - assets/images/carousel_ad_image_4.jpg
-    - assets/icons/2wheelers_icon.png
-    - assets/icons/appliances_icon.png
-    - assets/icons/auto_acc_icon.png
-    - assets/icons/beauty_icon.png
-    - assets/icons/electronics_icon.png
-    - assets/icons/fashion_icon.png
-    - assets/icons/food&health_icon.png
-    - assets/icons/furniture_icon.png
-    - assets/icons/gadgets_icon.png
-    - assets/icons/grocery_icon.png
-    - assets/icons/home_icon.png
-    - assets/icons/mobiles_icon.png
-    - assets/icons/scan&pay_icon.png
-    - assets/icons/sports_icon.png
-    - assets/icons/toys_icon.png
-    - assets/icons/sell_phone_icon.png
-    - assets/icons/next-gen_icon.png
-    - assets/icons/supercoin_icon.png
-    - assets/icons/tablet_premier_league_icon.png
-    - assets/images/discover&shop_cont_bg.jpg
-    - assets/images/clock.png
-    - assets/images/mattresses.png
-    - assets/images/bottles.png
-    - assets/images/mop_set.png
-    - assets/images/net.png
-    - assets/images/sofa_covers.png
-    - assets/images/towel.png
-    - assets/images/TV_units.png
-    - assets/images/wall_lamps.png
-    - assets/images/int_finds_img_1.jpg
-    - assets/images/int_finds_img_2.jpg
-    - assets/images/int_finds_img_3.jpg
-    - assets/images/int_finds_img_4.jpg
-    - assets/images/green_bg.jpg
-    - assets/images/edge50fusion.jpg
-    - assets/images/galaxy_f06.jpg
-    - assets/images/moto_g85.jpg
-    - assets/images/oppo_k12x_5g.jpg
-    - assets/images/realme_p3_pro_5g.jpg
-    - assets/images/realme_p3x_5g.jpg
-    - assets/images/vivo_t4x.jpg
-    - assets/images/cant_choose.jpg
-    - assets/images/realme_13pro_5g.jpg
-    - assets/icons/plus_logo.png
-    - assets/icons/supercoin_icon_min.png
-    - assets/icons/verify_email_logo.png
-    - assets/icons/flipkart_logo_text.png
-    - assets/images/purple_bg.jpg
-    - assets/icons/spoyl.png
-    - assets/icons/cart_icon.png
+    - assets/icons/
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

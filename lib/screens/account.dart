@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flipkart/screens/orders.dart';
+import 'package:flipkart/screens/wishlist.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,9 +17,12 @@ class Account extends StatefulWidget {
 
 class _AccountState extends State<Account> {
   String? userName;
+  String? userId;
   int? superCoins;
   User? user;
   StreamSubscription<User?>? authSubscription;
+
+  late List<Map<String, dynamic>> items = [];
 
   @override
   void initState() {
@@ -34,10 +39,12 @@ class _AccountState extends State<Account> {
 
       if (user != null) {
         fetchUserDetails(user.uid); // Fetch user details using UID
+        print("userId: $userId");
       } else {
         print("User is NOT logged in.");
         setState(() {
-          userName = null; // Reset user data when logged out
+          userName = null;
+          userId = null;
           superCoins = null;
         });
       }
@@ -46,6 +53,10 @@ class _AccountState extends State<Account> {
 
   Future<void> fetchUserDetails(String uid) async {
     try {
+      setState(() {
+        userId = uid; // ✅ Set userId immediately
+      });
+
       var userDoc = await FirebaseFirestore.instance
           .collection('userDetails')
           .doc(uid)
@@ -54,19 +65,28 @@ class _AccountState extends State<Account> {
       if (userDoc.exists) {
         print("User data fetched: ${userDoc.data()}");
 
-        if (mounted) {
-          setState(() {
-            userName = userDoc.data()?['name'] as String?;
-            superCoins = (userDoc.data()?['supercoin'] ?? 0) as int;
-          });
-        }
+        setState(() {
+          userName = userDoc.data()?['name'] as String?;
+          superCoins = (userDoc.data()?['supercoin'] ?? 0) as int;
+
+          // ✅ Ensure items are initialized only after userId is confirmed
+          items = [
+            {'icon': CupertinoIcons.cube_box, 'text': 'Orders', 'page': Orders()},
+            {'icon': CupertinoIcons.heart, 'text': 'Wishlist', 'page': Wishlist(userId: userId)},
+            {'icon': CupertinoIcons.gift, 'text': 'Coupons', 'page': Coupons()},
+            {'icon': Icons.headset_mic_outlined, 'text': 'Help Center', 'page': HelpCenter()},
+          ];
+
+          print("✅ userId passed to Wishlist: $userId");
+        });
       } else {
-        print("User document not found in Firestore.");
+        print("⚠️ User document not found in Firestore.");
       }
     } catch (e) {
-      print("Error fetching user details: $e");
+      print("🔥 Error fetching user details: $e");
     }
   }
+
 
   @override
   void dispose() {
@@ -245,7 +265,7 @@ class _AccountState extends State<Account> {
                                 ),
                                 foregroundColor: Colors.white,
                               ),
-                              child: const Text('Log In'),
+                              child: const Text('Login'),
                             ),
                           ),
                         ],
@@ -274,156 +294,63 @@ class _AccountState extends State<Account> {
                   offset: Offset(1, 1),
                 ),
               ]),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: 150,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  border: Border.all(
-                                      color: Colors.grey, width: 0.5),
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Icon(
-                                      CupertinoIcons.cube_box,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Text(
-                                      'Orders',
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 150 / 35,
+                    ),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => items[index]['page']),
+                          );
+                        },
+                        child: Container(
+                          width: 150,
+                          height: 35,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            border: Border.all(color: Colors.grey, width: 0.5),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: 150,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  border: Border.all(
-                                      color: Colors.grey, width: 0.5),
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Icon(
-                                      CupertinoIcons.heart,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Text(
-                                      'Wishlist',
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  )
-                                ],
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4.0),
+                                child: Icon(
+                                  items[index]['icon'],
+                                  color: CupertinoColors.activeBlue,
+                                ),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: 150,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  border: Border.all(
-                                      color: Colors.grey, width: 0.5),
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Icon(
-                                      CupertinoIcons.gift,
-                                      color: Colors.blue,
-                                    ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4.0),
+                                child: Text(
+                                  items[index]['text'],
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Text(
-                                      'Coupons',
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  )
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: 150,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  border: Border.all(
-                                      color: Colors.grey, width: 0.5),
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Icon(
-                                      Icons.headset_mic_outlined,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Text(
-                                      'Help Center',
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      );
+                    },
                   ),
-                ],
+                ),
               ),
             ),
             SizedBox(
@@ -1203,7 +1130,8 @@ class _AccountState extends State<Account> {
                             },
                             child: Text(
                               "Cancel",
-                              style: TextStyle(color: CupertinoColors.activeBlue),
+                              style:
+                                  TextStyle(color: CupertinoColors.activeBlue),
                             ),
                           ),
                           TextButton(
@@ -1212,7 +1140,8 @@ class _AccountState extends State<Account> {
                             },
                             child: Text(
                               "Log Out",
-                              style: TextStyle(color: CupertinoColors.activeBlue),
+                              style:
+                                  TextStyle(color: CupertinoColors.activeBlue),
                             ),
                           ),
                         ],

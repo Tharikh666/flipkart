@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flipkart/screens/products.dart';
 import 'package:flutter/material.dart';
@@ -36,12 +35,21 @@ class _HomeState extends State<Home> {
           child: Container(
             width: 75,
             height: 50,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/icons/flipkart_logo.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+            decoration: BoxDecoration(
+                image: const DecorationImage(
+                  image: AssetImage('assets/icons/flipkart_icon.jpg'),
+                  fit: BoxFit.cover,
+                ),
+                borderRadius: BorderRadius.circular(5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                    spreadRadius: 2,
+                    blurStyle: BlurStyle.normal,
+                    blurRadius: 2,
+                  ),
+                ]),
           ),
         ),
         flexibleSpace: Container(
@@ -55,7 +63,9 @@ class _HomeState extends State<Home> {
             ),
           ),
         ),
-        title: SearchBarWidget(userId: widget.userId,),
+        title: SearchBarWidget(
+          userId: widget.userId,
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(

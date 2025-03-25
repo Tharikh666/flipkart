@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flipkart/screens/product_details.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/search_bar.dart';
@@ -41,7 +42,7 @@ class _ProductsState extends State<Products> {
           hintText: widget.searchHint ?? widget.productLabel,
           showTrailing: false,
         ),
-        actions:  [
+        actions: [
           Padding(
             padding: EdgeInsets.all(8.0),
             child: IconButton(
@@ -128,11 +129,11 @@ class ProductBody extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.62,
-      ),
+          crossAxisCount: 1,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.62,
+          mainAxisExtent: 150),
       itemCount: products.length,
       itemBuilder: (context, index) {
         final productData = products[index].data() as Map<String, dynamic>;
@@ -147,7 +148,7 @@ class ProductBody extends StatelessWidget {
   }
 }
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final Map<String, dynamic> product;
   final String productId;
   final String? userId;
@@ -156,19 +157,100 @@ class ProductCard extends StatelessWidget {
     super.key,
     this.userId,
     required this.product,
-    required this.productId, // ✅ Require Firestore document ID
+    required this.productId,
   });
 
   @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  bool isWishlisted = false;
+  final CollectionReference wishlistRef =
+  FirebaseFirestore.instance.collection('wishlist');
+
+  @override
+  void initState() {
+    super.initState();
+    _checkWishlistStatus();
+  }
+
+  // ✅ Check if product is already in the wishlist
+  Future<void> _checkWishlistStatus() async {
+    if (widget.userId == null) return;
+
+    final snapshot = await wishlistRef
+        .where('userId', isEqualTo: widget.userId)
+        .where('productId', isEqualTo: widget.productId)
+        .get();
+
+    setState(() {
+      isWishlisted = snapshot.docs.isNotEmpty;
+    });
+  }
+
+  // 🔥 Toggle Wishlist: Add/Remove product
+  Future<void> _toggleWishlist() async {
+    if (widget.userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please log in to manage your wishlist!")),
+      );
+      return;
+    }
+
+    if (isWishlisted) {
+      // ✅ Remove from wishlist
+      final snapshot = await wishlistRef
+          .where('userId', isEqualTo: widget.userId)
+          .where('productId', isEqualTo: widget.productId)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        await wishlistRef.doc(doc.id).delete();
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Removed from wishlist")),
+      );
+    } else {
+      // ✅ Add to wishlist
+      await wishlistRef.add({
+        'userId': widget.userId,
+        'productId': widget.productId,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Added to wishlist")),
+      );
+    }
+
+    setState(() => isWishlisted = !isWishlisted);
+  }
+
+  // 🎯 Calculate Discount Percentage (handles commas too)
+  int _calculateDiscount(String price, String exPrice) {
+    double parsePrice(String value) {
+      String cleanedValue = value.replaceAll(',', ''); // 🔍 Clean commas
+      return double.tryParse(cleanedValue) ?? 0;
+    }
+
+    double priceValue = parsePrice(price);
+    double exPriceValue = parsePrice(exPrice);
+
+    if (exPriceValue <= priceValue || exPriceValue == 0) return 0;
+
+    return (((exPriceValue - priceValue) / exPriceValue) * 100).round();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // ✅ Extract product data with safe fallbacks
-    String name = product['name'] ?? "No Name";
-    String image = product['img1'] ?? "";
-    String price = product['price'] ?? "0";
-    String exPrice = product['exPrice'] ?? "0";
-    double rating = product['rating'] is int
-        ? (product['rating'] as int).toDouble()
-        : (product['rating'] ?? 4.0);
+    String name = widget.product['name'] ?? "No Name";
+    String image = widget.product['img1'] ?? "";
+    String price = widget.product['price'] ?? "0";
+    String exPrice = widget.product['exPrice'] ?? "0";
+    double rating = widget.product['rating'] is int
+        ? (widget.product['rating'] as int).toDouble()
+        : (widget.product['rating'] ?? 4.0);
     int discount = _calculateDiscount(price, exPrice);
 
     return GestureDetector(
@@ -177,18 +259,18 @@ class ProductCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => ProductDetails(
-              userId: userId,
-              productId: productId, // ✅ Pass the correct Firestore ID
+              userId: widget.userId,
+              productId: widget.productId,
               name: name,
-              item: product['item'] ?? "No Description",
+              item: widget.product['item'] ?? "No Description",
               price: price,
               exPrice: exPrice,
               rating: rating,
               images: [
-                product['img1'] ?? "",
-                product['img2'] ?? "",
-                product['img3'] ?? "",
-                product['img4'] ?? "",
+                widget.product['img1'] ?? "",
+                widget.product['img2'] ?? "",
+                widget.product['img3'] ?? "",
+                widget.product['img4'] ?? "",
               ],
             ),
           ),
@@ -207,131 +289,113 @@ class ProductCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 📸 Product Image
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  image: image.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(image),
-                          fit: BoxFit.contain,
-                        )
-                      : null,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
-                ),
-                child: image.isEmpty
-                    ? const Center(child: Icon(Icons.image_not_supported))
+            Container(
+              width: 100,
+              height: 150,
+              decoration: BoxDecoration(
+                image: image.isNotEmpty
+                    ? DecorationImage(
+                  image: NetworkImage(image),
+                  fit: BoxFit.contain,
+                )
                     : null,
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(8),
+                ),
+              ),
+              child: image.isEmpty
+                  ? const Center(child: Icon(Icons.image_not_supported))
+                  : null,
+            ),
+
+            // 📌 Product Details Section
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 🏷️ Product Name
+                    Text(
+                      name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // ⭐ Product Rating
+                    Row(
+                      children: List.generate(
+                        5,
+                            (index) => Icon(
+                          index < rating.round()
+                              ? Icons.star
+                              : Icons.star_border,
+                          size: 14,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // 💰 Price, Discount, and Original Price
+                    Row(
+                      children: [
+                        Text(
+                          "₹$price",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "₹$exPrice",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "$discount% off",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
+
+            // ❤️ Wishlist Icon with toggle
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 🏷️ Product Name
-                  Text(
-                    name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // 💰 Price, Discount, and Original Price
-                  Row(
-                    children: [
-                      Text(
-                        "₹$price",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        "₹$exPrice",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        " $discount% off",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  // ⭐ Product Rating & Delivery Info
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              "$rating",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Icon(Icons.star,
-                                size: 12, color: Colors.white),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        "Free Delivery",
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              padding: const EdgeInsets.only(top: 4, right: 4),
+              child: IconButton(
+                onPressed: _toggleWishlist,
+                icon: Icon(
+                  isWishlisted ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                  color: isWishlisted ? Colors.red : Colors.grey,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  // 🎯 Calculate Discount Percentage (handles commas too)
-  int _calculateDiscount(String price, String exPrice) {
-    double parsePrice(String value) {
-      String cleanedValue = value.replaceAll(',', ''); // 🔍 Clean commas
-      return double.tryParse(cleanedValue) ?? 0;
-    }
-
-    double priceValue = parsePrice(price);
-    double exPriceValue = parsePrice(exPrice);
-
-    if (exPriceValue <= priceValue || exPriceValue == 0) return 0;
-
-    return (((exPriceValue - priceValue) / exPriceValue) * 100).round();
   }
 }

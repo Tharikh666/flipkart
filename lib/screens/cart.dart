@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flipkart/screens/navigation_bar.dart';
 import 'package:flipkart/screens/product_details.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'home.dart';
+import 'login.dart';
 
 class Cart extends StatefulWidget {
   const Cart({super.key, this.userId});
@@ -14,6 +18,66 @@ class Cart extends StatefulWidget {
 }
 
 class _CartState extends State<Cart> {
+  String? userName;
+  int? superCoins;
+  User? user;
+  StreamSubscription<User?>? authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for authentication state changes
+    authSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (mounted) {
+        setState(() {
+          this.user = user;
+        });
+      }
+
+      if (user != null) {
+        fetchUserDetails(user.uid); // Fetch user details using UID
+      } else {
+        print("User is NOT logged in.");
+        setState(() {
+          userName = null; // Reset user data when logged out
+          superCoins = null;
+        });
+      }
+    });
+  }
+
+  Future<void> fetchUserDetails(String uid) async {
+    try {
+      var userDoc = await FirebaseFirestore.instance
+          .collection('userDetails')
+          .doc(uid)
+          .get();
+
+      if (userDoc.exists) {
+        print("User data fetched: ${userDoc.data()}");
+
+        if (mounted) {
+          setState(() {
+            userName = userDoc.data()?['name'] as String?;
+            superCoins = (userDoc.data()?['supercoin'] ?? 0) as int;
+          });
+        }
+      } else {
+        print("User document not found in Firestore.");
+      }
+    } catch (e) {
+      print("Error fetching user details: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    authSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,6 +103,48 @@ class _CartState extends State<Cart> {
                       color: Colors.black,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const Login()),
+                        ).then((_) {
+                          if (FirebaseAuth.instance.currentUser != null) {
+                            fetchUserDetails(
+                                FirebaseAuth.instance.currentUser!.uid);
+                          }
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CupertinoColors.systemBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Login'),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Navigate(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      "Continue Shopping",
+                      style: TextStyle(
+                        color: CupertinoColors.activeBlue,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -168,31 +274,73 @@ class _CartState extends State<Cart> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                            Icons.remove_circle_outline,
-                                            color: Colors.red),
-                                        onPressed: () => _updateQuantity(
-                                            productId, quantity - 1),
+                                  Container(
+                                    width: 135,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        width: 1.25,
+                                        color: Colors.grey,
                                       ),
-                                      Text(
-                                        "Qty: $quantity",
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Expanded(
+                                          child: Center(
+                                            child: IconButton(
+                                              icon: const Icon(Icons.remove,
+                                                  color: Colors.red, size: 16),
+                                              onPressed: () => _updateQuantity(
+                                                  productId, quantity - 1),
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                            Icons.add_circle_outline,
-                                            color: Colors.green),
-                                        onPressed: () => _updateQuantity(
-                                            productId, quantity + 1),
-                                      ),
-                                    ],
+                                        Container(
+                                          width: 1,
+                                          color: Colors.grey,
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 4),
+                                        ),
+                                        Expanded(
+                                          child: Center(
+                                            child: Text(
+                                              "Qty: $quantity",
+                                              style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1,
+                                          color: Colors.grey,
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 4),
+                                        ),
+                                        Expanded(
+                                          child: Center(
+                                            child: IconButton(
+                                              icon: const Icon(Icons.add,
+                                                  color: Colors.green,
+                                                  size: 16),
+                                              onPressed: () => _updateQuantity(
+                                                  productId, quantity + 1),
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -200,7 +348,8 @@ class _CartState extends State<Cart> {
                             trailing: IconButton(
                               icon: const Icon(Icons.delete_rounded,
                                   color: Colors.red),
-                              onPressed: () => _removeFromCart(productId),
+                              onPressed: () => _showCartRemoveConfirmation(
+                                  context, productId),
                             ),
                             onTap: () {
                               Navigator.push(
@@ -330,6 +479,39 @@ class _CartState extends State<Cart> {
         SnackBar(content: Text("Failed to remove item: $e")),
       );
     }
+  }
+
+  // Function to show the confirmation dialog
+  void _showCartRemoveConfirmation(BuildContext context, String productId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Remove from Cart?'),
+          content: const Text(
+              'Are you sure you want to remove this item from your cart?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(), // Cancel button
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                _removeFromCart(productId); // Call the removal function
+              },
+              child: const Text(
+                'Remove',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // 🛍️ Checkout Functionality

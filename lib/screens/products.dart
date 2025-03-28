@@ -167,7 +167,7 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   bool isWishlisted = false;
   final CollectionReference wishlistRef =
-  FirebaseFirestore.instance.collection('wishlist');
+      FirebaseFirestore.instance.collection('wishlist');
 
   @override
   void initState() {
@@ -299,9 +299,9 @@ class _ProductCardState extends State<ProductCard> {
               decoration: BoxDecoration(
                 image: image.isNotEmpty
                     ? DecorationImage(
-                  image: NetworkImage(image),
-                  fit: BoxFit.contain,
-                )
+                        image: NetworkImage(image),
+                        fit: BoxFit.contain,
+                      )
                     : null,
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(8),
@@ -333,16 +333,37 @@ class _ProductCardState extends State<ProductCard> {
 
                     // ⭐ Product Rating
                     Row(
-                      children: List.generate(
-                        5,
+                      children: [
+                        Row(
+                          children: List.generate(
+                            5,
                             (index) => Icon(
-                          index < rating.round()
-                              ? Icons.star
-                              : Icons.star_border,
-                          size: 14,
-                          color: Colors.green,
+                              index < rating.round()
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              size: 14,
+                              color: Colors.green,
+                            ),
+                          ),
                         ),
-                      ),
+                        Container(
+                          width: 20,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: Center(
+                            child: Text(
+                              "$rating",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12),
+                            ),
+                          ),
+                        )
+                      ],
                     ),
 
                     const SizedBox(height: 4),
@@ -388,7 +409,9 @@ class _ProductCardState extends State<ProductCard> {
               child: IconButton(
                 onPressed: _toggleWishlist,
                 icon: Icon(
-                  isWishlisted ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                  isWishlisted
+                      ? CupertinoIcons.heart_fill
+                      : CupertinoIcons.heart,
                   color: isWishlisted ? Colors.red : Colors.grey,
                 ),
               ),

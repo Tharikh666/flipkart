@@ -28,6 +28,18 @@ class _AccountState extends State<Account> {
   void initState() {
     super.initState();
 
+    // Set default items for logged-out users
+    items = [
+      {'icon': CupertinoIcons.cube_box, 'text': 'Orders', 'page': null},
+      {'icon': CupertinoIcons.heart, 'text': 'Wishlist', 'page': null},
+      {'icon': CupertinoIcons.gift, 'text': 'Coupons', 'page': null},
+      {
+        'icon': Icons.headset_mic_outlined,
+        'text': 'Help Center',
+        'page': HelpCenter()
+      },
+    ];
+
     // Listen for authentication state changes
     authSubscription =
         FirebaseAuth.instance.authStateChanges().listen((User? user) {
@@ -38,10 +50,8 @@ class _AccountState extends State<Account> {
       }
 
       if (user != null) {
-        fetchUserDetails(user.uid); // Fetch user details using UID
-        print("userId: $userId");
+        fetchUserDetails(user.uid);
       } else {
-        print("User is NOT logged in.");
         setState(() {
           userName = null;
           userId = null;
@@ -54,7 +64,7 @@ class _AccountState extends State<Account> {
   Future<void> fetchUserDetails(String uid) async {
     try {
       setState(() {
-        userId = uid; // ✅ Set userId immediately
+        userId = uid;
       });
 
       var userDoc = await FirebaseFirestore.instance
@@ -63,30 +73,35 @@ class _AccountState extends State<Account> {
           .get();
 
       if (userDoc.exists) {
-        print("User data fetched: ${userDoc.data()}");
-
         setState(() {
           userName = userDoc.data()?['name'] as String?;
           superCoins = (userDoc.data()?['supercoin'] ?? 0) as int;
 
-          // ✅ Ensure items are initialized only after userId is confirmed
+          // Set items only for logged-in users
           items = [
-            {'icon': CupertinoIcons.cube_box, 'text': 'Orders', 'page': Orders()},
-            {'icon': CupertinoIcons.heart, 'text': 'Wishlist', 'page': Wishlist(userId: userId)},
+            {
+              'icon': CupertinoIcons.cube_box,
+              'text': 'Orders',
+              'page': Orders()
+            },
+            {
+              'icon': CupertinoIcons.heart,
+              'text': 'Wishlist',
+              'page': Wishlist(userId: userId)
+            },
             {'icon': CupertinoIcons.gift, 'text': 'Coupons', 'page': Coupons()},
-            {'icon': Icons.headset_mic_outlined, 'text': 'Help Center', 'page': HelpCenter()},
+            {
+              'icon': Icons.headset_mic_outlined,
+              'text': 'Help Center',
+              'page': HelpCenter()
+            },
           ];
-
-          print("✅ userId passed to Wishlist: $userId");
         });
-      } else {
-        print("⚠️ User document not found in Firestore.");
       }
     } catch (e) {
       print("🔥 Error fetching user details: $e");
     }
   }
-
 
   @override
   void dispose() {
@@ -310,11 +325,21 @@ class _AccountState extends State<Account> {
                     itemBuilder: (context, index) {
                       return GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => items[index]['page']),
-                          );
+                          if (items[index]['page'] != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => items[index]['page']),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Please log in to access this feature'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                         child: Container(
                           width: 150,
@@ -1108,86 +1133,72 @@ class _AccountState extends State<Account> {
             SizedBox(
               height: 5,
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () async {
-                  bool confirmLogout = await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text("Confirm Log out"),
-                        content: Text("Are you sure you want to log out?"),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(5),
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop(false); // Cancel logout
-                            },
-                            child: Text(
-                              "Cancel",
-                              style:
-                                  TextStyle(color: CupertinoColors.activeBlue),
+            if (user != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    bool confirmLogout = await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text("Confirm Log out"),
+                          content: Text("Are you sure you want to log out?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text("Cancel",
+                                  style: TextStyle(
+                                      color: CupertinoColors.activeBlue)),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop(true); // Confirm logout
-                            },
-                            child: Text(
-                              "Log Out",
-                              style:
-                                  TextStyle(color: CupertinoColors.activeBlue),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text("Log Out",
+                                  style: TextStyle(
+                                      color: CupertinoColors.activeBlue)),
                             ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (confirmLogout == true) {
+                      try {
+                        await FirebaseAuth.instance.signOut();
+                        setState(() {
+                          user = null;
+                          userName = null;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Logged out successfully"),
+                            backgroundColor: CupertinoColors.activeBlue,
                           ),
-                        ],
-                      );
-                    },
-                  );
-
-                  if (confirmLogout == true) {
-                    try {
-                      await FirebaseAuth.instance.signOut();
-                      setState(() {
-                        user = null;
-                        userName = null;
-                      });
-
-                      // Show success snackbar
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Logged out successfully"),
-                          backgroundColor: CupertinoColors.activeBlue,
-                        ),
-                      );
-                    } catch (e) {
-                      // Show error snackbar
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Logout failed: ${e.toString()}"),
-                          backgroundColor: Colors.grey,
-                        ),
-                      );
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Logout failed: ${e.toString()}"),
+                            backgroundColor: Colors.grey,
+                          ),
+                        );
+                      }
                     }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: CupertinoColors.activeBlue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(5)),
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: CupertinoColors.activeBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(5)),
+                    ),
+                    minimumSize: Size(double.infinity, 40),
                   ),
-                  minimumSize: Size(double.infinity, 40),
+                  child: const Text("Log Out"),
                 ),
-                child: const Text("Log Out"),
               ),
-            ),
             SizedBox(
-              height: 20,
+              height: 10,
             ),
           ],
         ),

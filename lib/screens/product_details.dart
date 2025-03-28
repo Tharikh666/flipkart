@@ -176,27 +176,33 @@ class ProductDetails extends StatelessWidget {
               onPressed: () => addToCart(context, userId!, productId),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: Colors.deepPurple,
+                foregroundColor: Colors.black,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 50, vertical: 12),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Add to Cart",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "Add to Cart",
+                style: TextStyle(fontSize: 18),
+              ),
             ),
             ElevatedButton(
               onPressed: () => _buyNow(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.deepPurple,
+                backgroundColor: Colors.yellow,
+                foregroundColor: Colors.black,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 50, vertical: 12),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Buy Now",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "Buy Now",
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
             ),
           ],
         ),
@@ -215,7 +221,8 @@ class ProductDetails extends StatelessWidget {
     return (((exPriceValue - priceValue) / exPriceValue) * 100).round();
   }
 
-  Future<void> addToCart(BuildContext context, String userId, String productId) async {
+  Future<void> addToCart(
+      BuildContext context, String userId, String productId) async {
     try {
       final cartRef = FirebaseFirestore.instance.collection('cart');
 
@@ -259,8 +266,6 @@ class ProductDetails extends StatelessWidget {
       );
     }
   }
-
-
 
   // 🛍️ Buy Now Functionality (Navigate to Checkout)
   void _buyNow(BuildContext context) {

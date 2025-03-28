@@ -197,10 +197,10 @@ class _WishlistState extends State<Wishlist> {
             itemCount: wishlistItems.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.75,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                mainAxisExtent: 300),
+                childAspectRatio: 0.62,
+                mainAxisExtent: 275),
             itemBuilder: (context, index) {
               final wishlistItem = wishlistItems[index];
               final productId = wishlistItem['productId'];
@@ -248,84 +248,110 @@ class _WishlistState extends State<Wishlist> {
                         ),
                       );
                     },
-                    child: Card(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 4,
-                      child: Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Image.network(
-                                  productData['img1'] ?? "",
+                    child: Padding(
+                      padding: const EdgeInsets.all(2.0),
+                      child: Card(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        child: Stack(
+                          alignment: Alignment.topRight,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: 2),
+                                SizedBox(
+                                  height: 120, // Set fixed height for consistency
                                   width: double.infinity,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.broken_image,
-                                          size: 80, color: Colors.grey),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  productData['name'] ?? "No Name",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                "₹${productData['price']}",
-                                style: const TextStyle(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          CupertinoColors.activeBlue,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(12)),
+                                    child: Image.network(
+                                      productData['img1'] ?? "",
+                                      fit: BoxFit.contain,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(
+                                        Icons.image_not_supported_outlined,
+                                        size: 80,
+                                        color: Colors.grey,
                                       ),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 4.0, vertical: 8.0),
-                                    ),
-                                    onPressed: () => addToCart(
-                                        context, widget.userId, productId),
-                                    icon: const Icon(
-                                      Icons.shopping_cart,
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                    label: const FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text('Add to Cart'),
                                     ),
                                   ),
                                 ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    productData['name'] ?? "No Name",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  "₹${productData['price']}",
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            Colors.yellow,
+                                        foregroundColor: Colors.black,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4.0, vertical: 8.0),
+                                      ),
+                                      onPressed: () => addToCart(
+                                          context, widget.userId, productId),
+                                      icon: const Icon(
+                                        Icons.shopping_cart,
+                                        size: 18,
+                                        color: Colors.black,
+                                      ),
+                                      label: const FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text('Add to Cart'),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: CircleAvatar(
+                                backgroundColor:
+                                    CupertinoColors.lightBackgroundGray,
+                                radius: 15,
+                                child: Center(
+                                  child: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: Colors.redAccent),
+                                    onPressed: () => _showDeleteConfirmation(
+                                        context, productId),
+                                  ),
+                                ),
                               ),
-                            ],
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () =>
-                                _showDeleteConfirmation(context, productId),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

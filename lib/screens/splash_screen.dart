@@ -22,17 +22,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CupertinoColors.activeBlue,
+      backgroundColor: Colors.yellow,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/icons/flipkart_logo.png'),
+                  image: AssetImage('assets/icons/flipkart_icon_bg_removed.png')
                 ),
               ),
             ),

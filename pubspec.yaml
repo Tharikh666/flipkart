@@ -41,6 +41,7 @@ dependencies:
   cloud_firestore: any
   pinput: ^3.0.1
   dropdown_search: ^5.0.3
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:

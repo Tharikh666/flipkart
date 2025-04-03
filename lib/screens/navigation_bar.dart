@@ -38,32 +38,32 @@ class _NavigateState extends State<Navigate> {
     // Listen for authentication state changes
     authSubscription =
         FirebaseAuth.instance.authStateChanges().listen((User? user) {
-          if (mounted) {
-            setState(() {
-              this.user = user;
-            });
-          }
-
-          if (user != null) {
-            fetchUserDetails(user.uid); // Fetch user details using UID
-          } else {
-            print("User is NOT logged in.");
-            setState(() {
-              userId = null; // Reset user data when logged out
-              userName = null;
-              address = null;
-              pinCode = null;
-              _initializePages(); // Reset pages to placeholder state
-            });
-          }
+      if (mounted) {
+        setState(() {
+          this.user = user;
         });
+      }
+
+      if (user != null) {
+        fetchUserDetails(user.uid); // Fetch user details using UID
+      } else {
+        print("User is NOT logged in.");
+        setState(() {
+          userId = null; // Reset user data when logged out
+          userName = null;
+          address = null;
+          pinCode = null;
+          _initializePages(); // Reset pages to placeholder state
+        });
+      }
+    });
   }
 
   // 🔥 Ensure pages are initialized early (placeholder state)
   void _initializePages() {
     _pages = [
       const Home(),
-      const Categories(),
+      Categories(userId: userId,),
       const Account(),
       Cart(userId: userId), // Cart still accepts userId
     ];
@@ -92,9 +92,13 @@ class _NavigateState extends State<Navigate> {
                 address: address,
                 pinCode: pinCode,
               ),
-              const Categories(),
+              Categories(
+                userId: userId,
+              ),
               const Account(),
-              Cart(userId: userId),
+              Cart(
+                userId: userId,
+              ),
             ];
           });
         }

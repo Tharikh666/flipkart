@@ -101,7 +101,8 @@ class _CartState extends State<Cart> {
 
       for (var cartDoc in cartDocs.docs) {
         String productId = cartDoc['productId'];
-        int itemQuantity = cartDoc['quantity'] ?? 1; // Corrected quantity handling
+        int itemQuantity =
+            cartDoc['quantity'] ?? 1; // Corrected quantity handling
 
         // Fetch product data from products collection
         final productDoc = await FirebaseFirestore.instance
@@ -113,7 +114,8 @@ class _CartState extends State<Cart> {
           final productData = productDoc.data() as Map<String, dynamic>;
 
           double price = _parsePrice(productData['price']?.toString() ?? "0");
-          double exPrice = _parsePrice(productData['exPrice']?.toString() ?? "0");
+          double exPrice =
+              _parsePrice(productData['exPrice']?.toString() ?? "0");
 
           total += price * itemQuantity;
           exTotal += exPrice * itemQuantity;
@@ -137,12 +139,12 @@ class _CartState extends State<Cart> {
         totalItems = totalQuantity; // ✅ Now this tracks all items correctly
       });
 
-      print('✅ Total price recalculated: $totalPrice, total no. of Items in Cart: $totalItems');
+      print(
+          '✅ Total price recalculated: $totalPrice, total no. of Items in Cart: $totalItems');
     } catch (e) {
       print('❌ Error calculating total price: $e');
     }
   }
-
 
   void _startCartListener() {
     FirebaseFirestore.instance
@@ -296,7 +298,10 @@ class _CartState extends State<Cart> {
                                     ),
                                     const Text(
                                       "Your cart is empty!",
-                                      style: TextStyle(fontSize: 16),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -764,10 +769,9 @@ class _CartState extends State<Cart> {
     }
   }
 
-
   Widget buildPriceDetailsSection() {
-
-    int deliveryCharge = totalItems > 0 && _parsePrice(totalPrice) < 200 ? 40 : 0;
+    int deliveryCharge =
+        totalItems > 0 && _parsePrice(totalPrice) < 200 ? 40 : 0;
     double finalAmount = _parsePrice(totalPrice) + deliveryCharge + 49;
 
     final indianFormat = NumberFormat.currency(
@@ -854,9 +858,12 @@ class _CartState extends State<Cart> {
                         ),
                       ),
                     TextSpan(
-                      text: deliveryCharge == 0 ? "FREE Delivery" : "₹$deliveryCharge",
+                      text: deliveryCharge == 0
+                          ? "FREE Delivery"
+                          : "₹$deliveryCharge",
                       style: TextStyle(
-                        color: deliveryCharge == 0 ? Colors.green : Colors.black,
+                        color:
+                            deliveryCharge == 0 ? Colors.green : Colors.black,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

@@ -111,7 +111,30 @@ class ProductBody extends StatelessWidget {
 
         // 🛑 No products in this category
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("No products found."));
+          return SizedBox(
+            height: 650,
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/icons/no_pdts.png',
+                    fit: BoxFit.contain,
+                    width: 100,
+                    height: 100,
+                  ),
+                  const Text(
+                    "No products found.",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         // ✅ Case 2 success: Load all products from this category
